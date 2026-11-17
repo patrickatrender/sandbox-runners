@@ -1,0 +1,27 @@
+services:
+  - type: web
+    name: sandbox-runners
+    runtime: python
+    plan: starter
+    buildCommand: pip install uv && uv sync --frozen --no-dev
+    startCommand: uv run --no-dev uvicorn --factory sandbox_runners.app:app --host 0.0.0.0 --port $PORT
+    healthCheckPath: /healthz
+    envVars:
+      - key: PYTHON_VERSION
+        value: "3.12.7"
+      - key: RENDER_API_KEY
+        sync: false
+      - key: RENDER_WORKSPACE_ID
+        sync: false
+      - key: GITHUB_APP_ID
+        sync: false
+      - key: GITHUB_APP_PRIVATE_KEY
+        sync: false
+      - key: GITHUB_WEBHOOK_SECRET
+        generateValue: true
+      - key: SANDBOX_GROUP_ID
+        sync: false
+      - key: SANDBOX_IMAGE
+        value: ci-runner
+      - key: SANDBOX_PLAN
+        value: 2c-4g

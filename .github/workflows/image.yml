@@ -1,0 +1,57 @@
+name: Runner image
+on:
+  push:
+    branches: [main]
+    paths: [image/**, .github/workflows/image.yml]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  packages: write
+
+env:
+  IMAGE: ghcr.io/${{ github.repository_owner }}/sandbox-runner
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    outputs:
+      digest: ${{ steps.push.outputs.digest }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/setup-buildx-action@v3
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - id: push
+        uses: docker/build-push-action@v6
+        with:
+          context: image
+          platforms: linux/amd64
+          push: true
+          tags: |
+            ${{ env.IMAGE }}:latest
+            ${{ env.IMAGE }}:${{ github.sha }}
+
+  import:
+    # Skipped until RENDER_API_KEY is set as a repository secret.
+    needs: build
+    runs-on: ubuntu-latest
+    env:
+      RENDER_API_KEY: ${{ secrets.RENDER_API_KEY }}
+      RENDER_WORKSPACE_ID: ${{ vars.RENDER_WORKSPACE_ID }}
+      SANDBOX_GROUP_ID: ${{ vars.SANDBOX_GROUP_ID }}
+      # Render pulls from GHCR with a read-only token while the package is private.
+      REGISTRY_USERNAME: ${{ secrets.GHCR_READ_USERNAME }}
+      REGISTRY_PASSWORD: ${{ secrets.GHCR_READ_TOKEN }}
+    steps:
+      - if: env.RENDER_API_KEY == ''
+        run: echo "RENDER_API_KEY not set; skipping import" && exit 0
+      - if: env.RENDER_API_KEY != ''
+        uses: actions/checkout@v4
+      - if: env.RENDER_API_KEY != ''
+        uses: astral-sh/setup-uv@v6
+      - if: env.RENDER_API_KEY != ''
+        run: uv run --frozen python -m sandbox_runners.import_image "${IMAGE}@${{ needs.build.outputs.digest }}"
