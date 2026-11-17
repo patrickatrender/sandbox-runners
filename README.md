@@ -87,7 +87,5 @@ uv run ruff check . && uv run ruff format --check .
 ## Not yet verified
 
 - An end-to-end job through a real GitHub App.
-- That `dockerd` starts in a sandbox booted from the imported image. It does in the default
-  sandbox image.
 - Runners are registered per repository. Organization-level runners would need the
   organization Self-hosted runners permission instead.
