@@ -1,0 +1,27 @@
+name: Sandbox smoke test
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths: [.github/workflows/sandbox-smoke.yml]
+
+jobs:
+  smoke:
+    runs-on: [self-hosted, render-sandbox]
+    timeout-minutes: 15
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_PASSWORD: x
+        ports: ["5432:5432"]
+        options: --health-cmd pg_isready --health-interval 2s --health-retries 15
+    steps:
+      - uses: actions/checkout@v4
+      - run: |
+          echo "runner: $RUNNER_NAME"
+          uname -a; nproc; free -h
+          docker run --rm hello-world | head -2
+      - run: docker run --rm --network host -e PGPASSWORD=x postgres:16-alpine psql -h 127.0.0.1 -U postgres -tAc 'select 42'
+      - uses: astral-sh/setup-uv@v6
+      - run: uv run pytest -q
