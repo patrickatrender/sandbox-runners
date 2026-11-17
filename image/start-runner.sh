@@ -2,6 +2,13 @@
 # Start Docker, then run one job with the JIT config the controller wrote.
 set -euo pipefail
 
+# Render keeps the image's /etc/resolv.conf, and base images ship it empty
+# because Docker normally writes it at run time. Without this, nothing in the
+# sandbox can resolve names.
+if ! grep -q '^nameserver' /etc/resolv.conf 2>/dev/null; then
+  printf 'nameserver 1.1.1.1\nnameserver 1.0.0.1\n' > /etc/resolv.conf
+fi
+
 config=/run/runner/jitconfig
 jit=$(cat "$config")
 rm -f "$config"
