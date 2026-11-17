@@ -12,6 +12,37 @@ asks for the `render-sandbox` label, it:
 When the job completes, the service terminates the sandbox. A sweep every 5 minutes removes
 sandboxes whose job ended without a webhook, and runners that never got a job.
 
+```mermaid
+sequenceDiagram
+    autonumber
+    participant GH as GitHub
+    participant Svc as sandbox-runners<br/>(Render web service)
+    participant R as Render Sandboxes API
+    participant SB as Sandbox<br/>(ci-runner image)
+
+    GH->>Svc: workflow_job "queued" (labels include render-sandbox)
+    Svc-->>GH: 202 accepted (work continues in background)
+    Svc->>GH: Create JIT runner gha-{install}-{repo}-{job}
+    GH-->>Svc: jitconfig
+    Svc->>R: Create sandbox with the same name
+    R-->>Svc: sandbox ready
+    Svc->>SB: exec: write jitconfig, start start-runner
+    SB->>SB: start dockerd, then run.sh --jitconfig
+    SB->>GH: Runner connects and picks up the job
+    GH->>SB: Job runs; runner exits when it ends
+    GH->>Svc: workflow_job "completed" (runner_name)
+    Svc->>R: Terminate sandbox
+
+    loop Every 5 minutes
+        Svc->>R: List live gha-* sandboxes
+        Svc->>GH: List the repo's runners
+        Svc->>R: Terminate sandboxes whose runner is gone or never got a job
+    end
+```
+
+The runner and its sandbox share a name that encodes installation, repository and job IDs, so
+the service keeps no state of its own.
+
 Workflows opt in with:
 
 ```yaml
