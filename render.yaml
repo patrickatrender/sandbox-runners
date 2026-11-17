@@ -12,13 +12,13 @@ services:
       - key: RENDER_API_KEY
         sync: false
       - key: RENDER_WORKSPACE_ID
-        sync: false
+        value: tea-db414o6i0phs73ejnt1g
       - key: GITHUB_APP_ID
-        sync: false
+        value: "5793560"
       - key: GITHUB_APP_PRIVATE_KEY
         sync: false
       - key: GITHUB_WEBHOOK_SECRET
-        generateValue: true
+        sync: false
       - key: SANDBOX_GROUP_ID
         sync: false
       - key: SANDBOX_IMAGE
