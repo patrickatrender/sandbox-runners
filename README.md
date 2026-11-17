@@ -29,7 +29,7 @@ sequenceDiagram
     Svc->>SB: exec: write jitconfig, start start-runner
     SB->>SB: start dockerd, then run.sh --jitconfig
     SB->>GH: Runner connects and picks up the job
-    GH->>SB: Job runs; runner exits when it ends
+    GH->>SB: Job runs, then the runner exits when it ends
     GH->>Svc: workflow_job "completed" (runner_name)
     Svc->>R: Terminate sandbox
 
